@@ -49,6 +49,7 @@ import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/
 import { IOutputService } from 'vs/workbench/services/output/common/output';
 import { IPaneCompositePartService } from 'vs/workbench/services/panecomposite/browser/panecomposite';
 import { IPathService } from 'vs/workbench/services/path/common/pathService';
+import { quote } from '@mergesium/shell-quote';
 
 interface ITerminalData {
 	terminal: ITerminalInstance;
@@ -1207,25 +1208,16 @@ export class TerminalTaskSystem extends Disposable implements ITaskSystem {
 				waitOnExit
 			};
 			if (task.command.presentation && task.command.presentation.echo) {
-				const getArgsToEcho = (args: string | string[] | undefined): string => {
-					if (!args || args.length === 0) {
-						return '';
-					}
-					if (Types.isString(args)) {
-						return args;
-					}
-					return args.join(' ');
-				};
 				if (needsFolderQualification && workspaceFolder) {
 					shellLaunchConfig.initialText = this.taskShellIntegrationStartSequence(cwd) + formatMessageForTerminal(nls.localize({
 						key: 'task.executingInFolder',
 						comment: ['The workspace folder the task is running in', 'The task command line or label']
-					}, 'Executing task in folder {0}: {1}', workspaceFolder.name, `${shellLaunchConfig.executable} ${getArgsToEcho(shellLaunchConfig.args)}`), { excludeLeadingNewLine: true }) + this.taskShellIntegrationOutputSequence;
+					}, 'Executing task in folder {0}: {1}', workspaceFolder.name, quote([shellLaunchConfig.executable, ...(shellLaunchConfig.args || [])])), { excludeLeadingNewLine: true }) + this.taskShellIntegrationOutputSequence;
 				} else {
 					shellLaunchConfig.initialText = this.taskShellIntegrationStartSequence(cwd) + formatMessageForTerminal(nls.localize({
 						key: 'task.executing.shell-integration',
 						comment: ['The task command line or label']
-					}, 'Executing task: {0}', `${shellLaunchConfig.executable} ${getArgsToEcho(shellLaunchConfig.args)}`), { excludeLeadingNewLine: true }) + this.taskShellIntegrationOutputSequence;
+					}, 'Executing task: {0}', quote([shellLaunchConfig.executable, ...(shellLaunchConfig.args || [])])), { excludeLeadingNewLine: true }) + this.taskShellIntegrationOutputSequence;
 				}
 			} else {
 				shellLaunchConfig.initialText = {
